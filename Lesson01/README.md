@@ -36,7 +36,7 @@
 ![Create settings.py](Images/settings.png)<br>
 Та додаємо у нього токен створеного бота,
 ```python
-BOT_TOKEN="1234567890:AbCdE1234567890aBcDe1234567890AbCdE"
+BOT_TOKEN = "1234567890:AbCdE1234567890aBcDe1234567890AbCdE"
 ```
 
 Ми створили нового бота та підготували PyCharm для роботи з ним.

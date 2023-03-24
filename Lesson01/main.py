@@ -1,41 +1,50 @@
-# Блок завантажування необхідних модулів
+# Блок завантажування необхідних модулів та змінних.
 from datetime import datetime
-# Модуль для роботи із збереженими змінними оточення
-from dotenv import load_dotenv
-# Модуль для роботи із змінними оточення
-from os import environ
 # Модуль для роботи з Телеграм ботами
 import telebot
+# Завантажуємо змінну з токеном бота
+from settings import BOT_TOKEN
 
-# Встановлюємо збережені зміні оточення
-load_dotenv()
-# Знаходимо значення змінної оточення BOT_TOKEN
-BOT_TOKEN = environ.get("BOT_TOKEN")
-if not BOT_TOKEN:
-    print("Не знайдено змінну оточення BOT_TOKEN")
-    exit(1)
+
+HELLO_WORDS = ["вітаю", "привіт", "hi", "hello"]
 bot = telebot.TeleBot(BOT_TOKEN)
 
 
-# Функція для обробки команд start та help
-@bot.message_handler(commands=["start", "help"])
+@bot.message_handler(commands=["help"])
+def send_help(message):
+    print("Обробка команди /help")
+    bot.send_message(message.from_user.id, "Список команд, які використовує бот: ")
+
+
+@bot.message_handler(commands=["start"])
 def send_welcome(message):
-    print(f"Відповідь на '{message.text}'")
-    bot.send_message(message.from_user.id, "Цей бот працює із списком товарів")
+    print("Обробка команди /start")
+    bot.send_message(
+        message.from_user.id,
+        f"{hello()}! Цей бот вміє працювати зі списком товарів. "
+        "Наберіть /help для отримання допомоги"
+    )
 
 
-# Функція відповідей на повідомлення
+# Обробник повідомлень, що містять привітання
+@bot.message_handler(func=lambda message: message.text.lower() in HELLO_WORDS)
+def send_hello(message):
+    print(f"Відповідь на привітання")
+    if message.from_user.first_name:
+        name = message.from_user.first_name
+    else:
+        name = message.from_user.username
+    bot.reply_to(message, f"{hello()}, {name}!")
+
+
+# Функція відповідей на решту повідомлень
 @bot.message_handler(content_types=['text'])
 def echo_all(message):
     print(f"Відповідь на {message.text=}")
-    if message.text.lower() in {"привіт", "hi", "hello"}:
-        reply_message = hello()
-    else:
-        reply_message = message.text
-    bot.send_message(message.from_user.id, reply_message)
+    bot.send_message(message.from_user.id, message.text)
 
 
-# Функція відповіді на привітання
+# Функція відповіді на привітання в залежності від часу
 def hello():
     now = datetime.now()
     if 6 <= now.hour < 12:

@@ -9,16 +9,10 @@
 `File -> Settings -> Project -> Python Interpreter -> + -> pytelegrambotapi -> Install Package`<br>
 ![Install pytelegrambotapi](Images/pytelegrambotapi.png)<br>
 або відкрити Terminal та виконати команду `pip install pytelegrambotapi`<br><br>
-3.  Додати бібліотеку для роботи зі збереженими змінними оточення:<br>
-`File -> Settings -> Project -> Python Interpreter -> + -> python-dotenv -> Install Package`<br>
-![Install dotenv](Images/dotenv.png)<br>
-або відкрити Terminal та виконати команду `pip install python-dotenv`<br><br>
-4. Створити головний скрипт `main.py`<br>
+3. Створити головний скрипт `main.py`<br>
 `Right click on project name -> New -> Python file -> Type "main" -> Click on Python file`<br>
 ![Create main.py](Images/main.png)<br><br>
-5. Створити файл `.env` для збереження ключа Телеграм бота<br>
-`Right click on project name -> New -> File -> Type ".env" -> Enter`<br>
-![Create .env](Images/env.png)<br><br>
+
 
 ## Створити Телеграм бота та підготуватися до роботи з ним
 
@@ -26,9 +20,12 @@
 ![BotFather](Images/botfather.png)<br><br>
 2. Вводимо команду `/newbot`, після чого називаємо свого бота та даємо йому ім'я користувача<br>
 ![New bot](Images/new_bot.png)<br><br>
-3. Додаємо у файл [.env](../.env) токен створеного бота, наприклад
-```dotenv
-MY_BOT_TOKEN=1234567890:AbCdE1234567890aBcDe1234567890AbCdE
+3. В PyCharm створюємо файл `settings.py` для збереження ключа Телеграм бота<br>
+`Right click on project name -> New -> Python file -> Type "settings" -> Click on Python file`<br>
+![Create settings.py](Images/settings.png)<br>
+Та додаємо у нього токен створеного бота,
+```python
+BOT_TOKEN="1234567890:AbCdE1234567890aBcDe1234567890AbCdE"
 ```
 
-Ми створили нового бота та підготували PyCharm для роботи з новим проектом.
+Ми створили нового бота та підготували PyCharm для роботи з ним.

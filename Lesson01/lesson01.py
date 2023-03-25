@@ -14,7 +14,7 @@ tomorrow_lessons += lessons
 print("Завтра буде", tomorrow_lessons, "уроків")
 if tomorrow_lessons > 8:
     print("Завтра буде важкий день")
-elif lessons == 0:
+elif tomorrow_lessons == 0:
     print("Завтра вихідний")
 else:
     print("Завтра буде легкий день!")

@@ -129,5 +129,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-#
-settings.py
+# Some project files
+/settings.py
+/goods.json

@@ -3,7 +3,7 @@ import telebot
 from settings import BOT_TOKEN
 
 
-HELLO_WORDS = ["вітаю", "привіт", "hi", "hello", "sava"]
+HELLO_WORDS = ["вітаю", "привіт", "hi", "hello", "bonjour"]
 bot = telebot.TeleBot(BOT_TOKEN)
 
 

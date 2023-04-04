@@ -53,7 +53,7 @@ def send_welcome(message):
 def add_goods(message):
     global goods, GOODS_KEYS
     print(f"Обробка /add від {message.from_user.first_name=}")
-    goods_from_command = parse_command_args(message.text, "/add")
+    goods_from_command = parse_command_args(message.text)
     if len(goods_from_command) != len(GOODS_KEYS):
         bot.send_message(message.from_user.id, "Хибна кількість аргументів")
         return
@@ -66,8 +66,9 @@ def add_goods(message):
     )
 
 
-def parse_command_args(text, command):
-    arguments = text[len(command) + 1:].split(",")
+def parse_command_args(text):
+    skip_position = text.find(" ") + 1
+    arguments = text[skip_position:].split(",")
     return arguments
 
 

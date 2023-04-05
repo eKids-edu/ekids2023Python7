@@ -5,15 +5,15 @@ from settings import BOT_TOKEN
 
 
 HELLO_WORDS = ["вітаю", "привіт", "hi", "hello", "bonjour"]
+GOODS_KEYS = ("Назва", "Ціна", "Опис")
+goods = []
 GOODS_FILE_NAME = 'goods.json'
-GOODS_KEYS = ("name", "price", "description")
 
 
 def load_goods():
-    global GOODS_FILE_NAME
+    global goods, GOODS_FILE_NAME
     with open(GOODS_FILE_NAME, "r", encoding="utf8") as f:
-        goods_info = json.load(f)
-    return goods_info
+        goods = json.load(f)
 
 
 def save_goods():
@@ -22,7 +22,7 @@ def save_goods():
         json.dump(goods, f, indent=2, ensure_ascii=False)
 
 
-goods = load_goods()
+load_goods()
 print(f"Завантажено товари {json.dumps(goods, indent=2, ensure_ascii=False)}")
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -63,7 +63,7 @@ def add_goods(message):
     save_goods()
     bot.send_message(
         message.from_user.id,
-        f"_*{goods[-1]['name']}*_ додано до списку товарів",
+        f"_*{goods[-1][GOODS_KEYS[0]]}*_ додано до списку товарів",
         parse_mode="MarkdownV2"
     )
 

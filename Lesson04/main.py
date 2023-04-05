@@ -79,10 +79,11 @@ def new_article_is_not_ok(new_goods):
     reason = ""
     if len(new_goods) != len(GOODS_KEYS):
         reason = "Хибна кількість аргументів"
-    try:
-        float(new_goods[1])
-    except ValueError:
-        reason = "Хибна ціна товару"
+    else:
+        try:
+            float(new_goods[1])
+        except ValueError:
+            reason = "Хибна ціна товару"
     return reason
 
 

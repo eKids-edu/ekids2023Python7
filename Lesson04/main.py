@@ -53,16 +53,18 @@ def send_welcome(message):
 def add_goods(message):
     global goods, GOODS_KEYS
     print(f"Обробка /add від {message.from_user.first_name=}")
-    goods_from_command = parse_command_args(message.text)
-    if len(goods_from_command) != len(GOODS_KEYS):
-        bot.send_message(message.from_user.id, "Хибна кількість аргументів")
+    new_article = parse_command_args(message.text)
+    if reason := new_article_is_not_ok(new_article):
+        reason += ". Товар не додано до списку."
+        bot.send_message(message.from_user.id, reason)
         return
-    goods_to_add = dict(zip(GOODS_KEYS, goods_from_command))
-    goods.append(goods_to_add)
+    new_article[1] = round(float(new_article[1]), 2)
+    goods.append(dict(zip(GOODS_KEYS, new_article)))
     save_goods()
     bot.send_message(
         message.from_user.id,
-        f"Товар '{goods_to_add['name']}' додано до списку"
+        f"_*{goods[-1]['name']}*_ додано до списку товарів",
+        parse_mode="MarkdownV2"
     )
 
 
@@ -70,6 +72,18 @@ def parse_command_args(text):
     skip_position = text.find(" ") + 1
     arguments = text[skip_position:].split(",")
     return arguments
+
+
+def new_article_is_not_ok(new_goods):
+    global GOODS_KEYS
+    reason = ""
+    if len(new_goods) != len(GOODS_KEYS):
+        reason = "Хибна кількість аргументів"
+    try:
+        float(new_goods[1])
+    except ValueError:
+        reason = "Хибна ціна товару"
+    return reason
 
 
 @bot.message_handler(commands=["print"])

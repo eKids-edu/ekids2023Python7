@@ -1,17 +1,17 @@
 [
   {
     "name": "Ручка",
-    "price": "10",
+    "price": 10.5,
     "description": "Синя"
   },
   {
     "name": "Олівець",
-    "price": "12",
+    "price": 12.0,
     "description": "Чорний графітовий"
   },
   {
     "name": "Пензель",
-    "price": "15",
+    "price": 25.99,
     "description": "М'який 0.5"
   }
 ]

@@ -6,11 +6,23 @@ from settings import BOT_TOKEN
 
 HELLO_WORDS = ["вітаю", "привіт", "hi", "hello", "bonjour"]
 GOODS_KEYS = ("Назва", "Ціна", "Опис")
+goods = []
 GOODS_FILE_NAME = 'goods.json'
 
 
-with open(GOODS_FILE_NAME, "r", encoding="utf8") as saved_data:
-    goods = json.load(saved_data)
+def load_goods():
+    global goods, GOODS_FILE_NAME
+    with open(GOODS_FILE_NAME, "r", encoding="utf8") as f:
+        goods = json.load(f)
+
+
+def save_goods():
+    global goods, GOODS_FILE_NAME
+    with open(GOODS_FILE_NAME, "w", encoding="utf8") as f:
+        json.dump(goods, f, indent=2, ensure_ascii=False)
+
+
+load_goods()
 print(f"Завантажено товари {json.dumps(goods, indent=2, ensure_ascii=False)}")
 bot = telebot.TeleBot(BOT_TOKEN)
 
@@ -39,25 +51,40 @@ def send_welcome(message):
 
 @bot.message_handler(commands=["add"])
 def add_goods(message):
-    global goods, GOODS_KEYS, GOODS_FILE_NAME
+    global goods, GOODS_KEYS
     print(f"Обробка /add від {message.from_user.first_name=}")
-    new_article = message.text[message.text.find(" ") + 1:].split(",")
-    if len(new_article) != len(GOODS_KEYS):
-        bot.send_message(message.from_user.id, "Хибна кількість аргументів")
+    new_article = parse_command_args(message.text)
+    if reason := new_article_is_not_ok(new_article):
+        reason += ". Товар не додано до списку."
+        bot.send_message(message.from_user.id, reason)
         return
-    try:
-        new_article[1] = round(float(new_article[1]), 2)
-    except ValueError:
-        bot.send_message(message.from_user.id, "Хибна ціна товару")
-        return
+    new_article[1] = round(float(new_article[1]), 2)
     goods.append(dict(zip(GOODS_KEYS, new_article)))
-    with open(GOODS_FILE_NAME, "w", encoding="utf8") as f:
-        json.dump(goods, f, indent=2, ensure_ascii=False)
+    save_goods()
     bot.send_message(
         message.from_user.id,
         f"_*{goods[-1][GOODS_KEYS[0]]}*_ додано до списку товарів",
         parse_mode="MarkdownV2"
     )
+
+
+def parse_command_args(text):
+    skip_position = text.find(" ") + 1
+    arguments = text[skip_position:].split(",")
+    return arguments
+
+
+def new_article_is_not_ok(new_goods):
+    global GOODS_KEYS
+    reason = ""
+    if len(new_goods) != len(GOODS_KEYS):
+        reason = "Хибна кількість аргументів"
+    else:
+        try:
+            float(new_goods[1])
+        except ValueError:
+            reason = "Хибна ціна товару"
+    return reason
 
 
 @bot.message_handler(commands=["print"])

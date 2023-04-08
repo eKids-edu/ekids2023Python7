@@ -38,7 +38,7 @@ def add_goods(message):
         bot.send_message(message.from_user.id, "Хибна кількість аргументів")
         return
     try:
-        new_article[1] = round(float(new_article[1]))
+        new_article[1] = round(float(new_article[1]), 2)
     except ValueError:
         bot.send_message(message.from_user.id, "Хибна ціна товару")
         return

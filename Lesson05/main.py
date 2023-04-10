@@ -50,15 +50,18 @@ def add_goods(message):
         return
     for i in range(len(new_article)):
         new_article[i] = " ".join(new_article[i].split())
+    for g in goods:
+        if new_article[0] == g[GOODS_KEYS[0]]:
+            bot.send_message(
+                message.from_user.id,
+                f"Товар '{new_article[0]}' вже є у списку"
+            )
+            return
     try:
         new_article[1] = round(float(new_article[1]), 2)
     except ValueError:
         bot.send_message(message.from_user.id, "Хибна ціна товару")
         return
-    for g in goods:
-        if new_article[0] == g[GOODS_KEYS[0]]:
-            bot.send_message(message.from_user.id, "Товар вже є у списку")
-            return
     goods.append(dict(zip(GOODS_KEYS, new_article)))
     with open(GOODS_FILE_NAME, "w", encoding="utf8") as f:
         json.dump(goods, f, indent=2, ensure_ascii=False)

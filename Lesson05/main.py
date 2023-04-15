@@ -8,6 +8,7 @@ HELLO_WORDS = ["вітаю", "привіт", "hi", "hello", "bonjour"]
 GOODS_KEYS = ("Назва", "Ціна", "Опис")
 GOODS_FILE_NAME = "goods.json"
 
+
 with open(GOODS_FILE_NAME, "r", encoding="utf8") as saved_goods:
     goods = json.load(saved_goods)
 print(
@@ -42,7 +43,7 @@ def send_welcome(message):
 
 @bot.message_handler(commands=["add"])
 def add_goods(message):
-    global goods, GOODS_KEYS, GOODS_FILE_NAME
+    global goods
     print(f"Обробка команди /add від {message.from_user.first_name}")
     new_article = message.text[message.text.find(" ") + 1:].split(",")
     if len(new_article) != len(GOODS_KEYS):
@@ -67,7 +68,7 @@ def add_goods(message):
         json.dump(goods, f, indent=2, ensure_ascii=False)
     bot.send_message(
         message.from_user.id,
-        f"{goods[-1]}\nдодано до списку товарів"
+        f"{goods[-1][GOODS_KEYS[0]]} додано до списку товарів"
     )
 
 
@@ -77,7 +78,7 @@ def print_goods(message):
     print(f"Обробка команди /print від {message.from_user.first_name}")
     bot.send_message(
         message.from_user.id,
-        json.dumps(goods, indent=2, ensure_ascii=False),
+        json.dumps(goods, indent=2, ensure_ascii=False)
     )
 
 

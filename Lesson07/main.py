@@ -54,17 +54,14 @@ def add_goods(message):
                          f"Товар '{new_article[0]}' вже є у списку")
         return
     new_article[1] = set_price(new_article[1])
-    if new_article[1] < 0:
-        bot.send_message(message.chat.id, "Хибна ціна товару")
-        return
     new_article[3] = set_stock(new_article[3])
-    if new_article[3] < 0:
-        bot.send_message(message.chat.id, "Хибна кількість товару")
+    if new_article[1] < 0 or new_article[3] < 0:
+        bot.send_message(message.chat.id, "Хибна ціна або кількість товару")
         return
     goods.append(dict(zip(GOODS_KEYS, new_article)))
     save(goods)
     bot.send_message(message.chat.id,
-                     f"'{goods[-1][PRIMARY_KEY]}' додано до списку товарів")
+                     f"'{goods[-1]}' додано до списку товарів")
 
 
 @bot.message_handler(commands=["print"])
@@ -160,6 +157,7 @@ def hello():
 
 
 def load():
+    global GOODS_FILE_NAME
     try:
         with open(GOODS_FILE_NAME, "r", encoding="utf8") as g:
             loaded_goods = json.load(g)
@@ -172,9 +170,11 @@ def load():
 
 
 def save(json_obj):
+    global GOODS_FILE_NAME
     try:
         with open(GOODS_FILE_NAME, "w", encoding="utf8") as f:
             json.dump(json_obj, f, indent=2, ensure_ascii=False)
+        print("Список товарів збережено")
     except IOError as err:
         print(f"Помилка запису {GOODS_FILE_NAME} {err}")
 
@@ -188,11 +188,11 @@ def parse_command_args(text):
     return args
 
 
-def skip_command_and_split(text: str, split_symbol: str) -> list:
+def skip_command_and_split(text, split_symbol):
     return text.strip()[text.find(" ") + 1:].split(split_symbol)
 
 
-def delete_spaces(text: str) -> str:
+def delete_spaces(text):
     return " ".join(text.split())
 
 

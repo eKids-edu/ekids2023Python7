@@ -54,11 +54,11 @@ def add_goods(message):
                          f"Товар '{new_article[0]}' вже є у списку")
         return
     new_article[1] = set_price(new_article[1])
-    if new_article[1] <= 0:
+    if new_article[1] < 0:
         bot.send_message(message.chat.id, "Хибна ціна товару")
         return
     new_article[3] = set_stock(new_article[3])
-    if new_article[3] <= 0:
+    if new_article[3] < 0:
         bot.send_message(message.chat.id, "Хибна кількість товару")
         return
     goods.append(dict(zip(GOODS_KEYS, new_article)))
@@ -232,9 +232,9 @@ def change_key(key, message, func=None):
         return
     if func:
         value = func(args[1])
-        if value <= 0:
+        if value < 0:
             bot.send_message(message.chat.id,
-                             f"Другий аргумент потрібен бути позитивним числом")
+                             f"Другий аргумент не може бути від'ємним")
             return
         goods[index][key] = value
     else:

@@ -47,7 +47,7 @@ def add_goods(message):
     new_article = parse_command_args(message.text)
     if len(new_article) != len(GOODS_KEYS):
         bot.send_message(message.chat.id,
-                         f"Аргументів повинно бути {len(GOODS_KEYS)}")
+                         f"❌️ Аргументів повинно бути {len(GOODS_KEYS)}")
         return
     index = find_goods(new_article[0])
     if index != -1:
@@ -57,7 +57,7 @@ def add_goods(message):
     new_article[1] = set_price(new_article[1])
     new_article[3] = set_stock(new_article[3])
     if new_article[1] < 0 or new_article[3] < 0:
-        bot.send_message(message.chat.id, "Хибна ціна або кількість товару")
+        bot.send_message(message.chat.id, "❌ Хибна ціна або кількість товару")
         return
     goods.append(dict(zip(GOODS_KEYS, new_article)))
     save(goods)
@@ -78,7 +78,7 @@ def delete_goods(message):
     print(f"Обробка команди /delete від {message.from_user.first_name}")
     names = parse_command_args(message.text)
     if not names:
-        bot.send_message(message.chat.id, "Хибна кількість аргументів")
+        bot.send_message(message.chat.id, "❌ Потрібен хоча б один товар")
         return
     for name in names:
         index = find_goods(name)
@@ -89,7 +89,7 @@ def delete_goods(message):
             bot.send_message(
                 message.chat.id,
                 f"{pretty_view(goods.pop(index))}\n"
-                "⚠️ видалено зі списку товарів")
+                "❎ видалено зі списку товарів")
     save(goods)
 
 

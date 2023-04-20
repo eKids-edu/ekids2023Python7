@@ -99,19 +99,19 @@ def delete_goods(message):
 @bot.message_handler(commands=["price"])
 def change_price(message):
     print(f"Обробка команди /price від {message.from_user.first_name}")
-    change_field(message, "Ціна", set_price)
+    change_key("Ціна", message, set_price)
 
 
 @bot.message_handler(commands=["desc"])
 def change_desc(message):
     print(f"Обробка команди /desc від {message.from_user.first_name}")
-    change_field(message, "Опис")
+    change_key("Опис", message)
 
 
 @bot.message_handler(commands=["stock"])
 def change_desc(message):
     print(f"Обробка команди /stock від {message.from_user.first_name}")
-    change_field(message, "Кількість", set_stock)
+    change_key("Кількість", message, set_stock)
 
 
 @bot.message_handler(commands=["report"])
@@ -180,7 +180,7 @@ def save(json_obj):
 
 
 def parse_command_args(text):
-    args = text.strip()[text.find(" ") + 1:].split(",")
+    args = skip_command_and_split(text, ",")
     if args[0][0] == "/":
         args.pop(0)
     for i in range(len(args)):
@@ -188,7 +188,11 @@ def parse_command_args(text):
     return args
 
 
-def delete_spaces(text):
+def skip_command_and_split(text: str, split_symbol: str) -> list:
+    return text.strip()[text.find(" ") + 1:].split(split_symbol)
+
+
+def delete_spaces(text: str) -> str:
     return " ".join(text.split())
 
 
@@ -214,7 +218,7 @@ def set_stock(text_stock):
         return -1
 
 
-def change_field(message, field, func=None):
+def change_key(key, message, func=None):
     global goods
     args = parse_command_args(message.text)
     if len(args) != 2:
@@ -232,11 +236,11 @@ def change_field(message, field, func=None):
             bot.send_message(message.chat.id,
                              f"Другий аргумент потрібен бути позитивним числом")
             return
-        goods[index][field] = value
+        goods[index][key] = value
     else:
-        goods[index][field] = args[1]
+        goods[index][key] = args[1]
     bot.send_message(message.chat.id,
-                     f"{field} товару '{args[0]}' змінено на '{args[1]}'")
+                     f"{key} товару '{args[0]}' змінено на '{args[1]}'")
     save(goods)
 
 

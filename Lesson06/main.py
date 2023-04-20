@@ -44,9 +44,10 @@ def add_goods(message):
         bot.send_message(message.chat.id,
                          f"Аргументів повинно бути {len(GOODS_KEYS)}")
         return
-    if find_goods(new_article[0]) != -1:
+    index = find_goods(new_article[0])
+    if index != -1:
         bot.send_message(message.chat.id,
-                         f"Товар '{new_article[0]}' вже є у списку")
+                         f"{pretty_view(goods[index])}\n❗вже є у списку")
         return
     new_article[1] = set_price(new_article[1])
     new_article[3] = set_stock(new_article[3])
@@ -56,15 +57,14 @@ def add_goods(message):
     goods.append(dict(zip(GOODS_KEYS, new_article)))
     save(goods)
     bot.send_message(message.chat.id,
-                     f"'{goods[-1]}' додано до списку товарів")
+                     f"{pretty_view(goods[-1])}\n✅ додано до списку товарів")
 
 
 @bot.message_handler(commands=["print"])
 def print_goods(message):
     global goods
     print(f"Обробка команди /print від {message.from_user.first_name}")
-    bot.send_message(message.chat.id,
-                     json.dumps(goods, indent=2, ensure_ascii=False))
+    bot.send_message(message.chat.id, pretty_view(goods))
 
 
 @bot.message_handler(commands=["delete"])
@@ -80,11 +80,12 @@ def delete_goods(message):
         if index == -1:
             bot.send_message(
                 message.chat.id,
-                f"'{name}' не знайдено у списку товарів")
+                f"❗️'{name}' не знайдено у списку товарів")
         else:
             bot.send_message(
                 message.chat.id,
-                f"{goods.pop(index)}\nвидалено зі списку товарів")
+                f"{pretty_view(goods.pop(index))}\n"
+                "⚠️ видалено зі списку товарів")
     save(goods)
 
 
@@ -118,7 +119,7 @@ def load():
     with open(GOODS_FILE_NAME, "r", encoding="utf8") as g:
         loaded_goods = json.load(g)
     print("Завантажено список товарів:\n"
-          f"{json.dumps(loaded_goods, indent=2, ensure_ascii=False)}")
+          f"{pretty_view(loaded_goods)}")
     return loaded_goods
 
 
@@ -127,6 +128,10 @@ def save(json_obj):
     with open(GOODS_FILE_NAME, "w", encoding="utf8") as f:
         json.dump(json_obj, f, indent=2, ensure_ascii=False)
     print("Збережено список товарів")
+
+
+def pretty_view(json_obj):
+    return json.dumps(json_obj, indent=2, ensure_ascii=False)
 
 
 def parse_command_args(text):

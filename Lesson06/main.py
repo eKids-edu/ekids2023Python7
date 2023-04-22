@@ -37,7 +37,7 @@ def send_welcome(message):
 
 @bot.message_handler(commands=["add"])
 def add_goods(message):
-    global goods, GOODS_KEYS
+    global goods
     print(f"Обробка команди /add від {message.from_user.first_name}")
     new_article = parse_command_args(message.text)
     if len(new_article) != len(GOODS_KEYS):
@@ -49,15 +49,17 @@ def add_goods(message):
         bot.send_message(message.chat.id,
                          f"{pretty_view(goods[index])}\n❗вже є у списку")
         return
-    new_article[1] = set_price(new_article[1])
-    new_article[3] = set_stock(new_article[3])
-    if new_article[1] < 0 or new_article[3] < 0:
-        bot.send_message(message.chat.id, "❌ Хибна ціна або кількість товару")
+    try:
+        new_article[1] = round(float(new_article[1]), 2)
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Хибна ціна товару")
         return
     goods.append(dict(zip(GOODS_KEYS, new_article)))
     save(goods)
-    bot.send_message(message.chat.id,
-                     f"{pretty_view(goods[-1])}\n✅ додано до списку товарів")
+    bot.send_message(
+        message.chat.id,
+        f"{pretty_view(goods[-1])}\n✅ додано до списку товарів"
+    )
 
 
 @bot.message_handler(commands=["print"])
@@ -92,7 +94,7 @@ def delete_goods(message):
 def send_hello(message):
     name = message.from_user.first_name
     print(f"Відповідь на привітання від {name}")
-    bot.reply_to(message, f"{hello()}, {name}! ")
+    bot.reply_to(message, f"{hello()}, {name}!")
 
 
 @bot.message_handler(content_types=['text'])
@@ -114,16 +116,13 @@ def hello():
 
 
 def load():
-    global GOODS_FILE_NAME
-    with open(GOODS_FILE_NAME, "r", encoding="utf8") as g:
-        loaded_goods = json.load(g)
-    print("Завантажено список товарів:\n"
-          f"{pretty_view(loaded_goods)}")
+    with open(GOODS_FILE_NAME, "r", encoding="utf8") as saved_goods:
+        loaded_goods = json.load(saved_goods)
+    print(f"Завантажено список товарів:\n{pretty_view(loaded_goods)}")
     return loaded_goods
 
 
 def save(json_obj):
-    global GOODS_FILE_NAME
     with open(GOODS_FILE_NAME, "w", encoding="utf8") as f:
         json.dump(json_obj, f, indent=2, ensure_ascii=False)
     print("Збережено список товарів")
@@ -156,20 +155,6 @@ def find_goods(name):
         if goods[i][PRIMARY_KEY] == name:
             return i
     return -1
-
-
-def set_price(text_price):
-    try:
-        return round(float(text_price), 2)
-    except ValueError:
-        return -1
-
-
-def set_stock(text_stock):
-    try:
-        return int(text_stock)
-    except ValueError:
-        return -1
 
 
 if __name__ == "__main__":

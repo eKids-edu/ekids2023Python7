@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
-import telebot
+from telebot import TeleBot
+from telebot.types import BotCommand, ReplyKeyboardMarkup, KeyboardButton
 from settings import BOT_TOKEN
 
 
@@ -9,12 +10,33 @@ GOODS_KEYS = ("Назва", "Ціна", "Опис", "Кількість")
 PRIMARY_KEY = "Назва"
 GOODS_FILE_NAME = "goods.json"
 
-bot = telebot.TeleBot(BOT_TOKEN)
+bot = TeleBot(BOT_TOKEN)
+
+
+def keyboard():
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add(KeyboardButton("🛒 Товари"),
+               KeyboardButton("📋 Звіт"),
+               KeyboardButton("❓ Допомога"),
+               KeyboardButton("📉 Відсутні на складі"))
+    return markup
+
+
+@bot.message_handler(commands=["start"])
+def send_welcome(message):
+    bot.send_message(
+        message.chat.id,
+        f"{hello()}, {message.from_user.first_name}!\n\n"
+        "Цей бот вміє працювати зі списком товарів. "
+        "Додавати, видаляти, редагувати товари, "
+        "змінювати їх кількість на складі, "
+        "а також проводити базову аналітику.\n\n"
+        "Наберіть /help для отримання допомоги по командам",
+        reply_markup=keyboard())
 
 
 @bot.message_handler(commands=["help"])
 def send_help(message):
-    print(f"Обробка команди /help від {message.from_user.first_name}")
     bot.send_message(
         message.chat.id,
         "*Список команд, які використовує бот*:\n\n"
@@ -23,27 +45,16 @@ def send_help(message):
         "/price _назва, ціна_ \- редагувати ціну товару\n"
         "/desc _назва, опис_ \- редагувати опис товару\n"
         "/stock _назва, кількість_ \- змінити кількість товару на складі\n"
-        "/report \- звіт по товарам на складі\n"
+        "/report \- сумарний звіт по товарам на складі\n"
+        "/oos \- звіт по товарам, що відсутні на складі\n"
         "/print \- вивести список товарів",
+        reply_markup=keyboard(),
         parse_mode="MarkdownV2")
-
-
-@bot.message_handler(commands=["start"])
-def send_welcome(message):
-    print(f"Обробка команди /start від {message.from_user.first_name}")
-    bot.send_message(
-        message.chat.id,
-        f"{hello()}, {message.from_user.first_name}!\n"
-        "Цей бот вміє працювати зі списком товарів. "
-        "Додавати, видаляти, редагувати товари, "
-        "змінювати їх кількість на складі, а також проводити базову аналітику. "
-        "Наберіть /help для отримання допомоги по командам")
 
 
 @bot.message_handler(commands=["add"])
 def add_goods(message):
     global goods, GOODS_KEYS
-    print(f"Обробка команди /add від {message.from_user.first_name}")
     new_article = parse_command_args(message.text)
     if len(new_article) != len(GOODS_KEYS):
         bot.send_message(message.chat.id,
@@ -68,14 +79,12 @@ def add_goods(message):
 @bot.message_handler(commands=["print"])
 def print_goods(message):
     global goods
-    print(f"Обробка команди /print від {message.from_user.first_name}")
     bot.send_message(message.chat.id, pretty_view(goods))
 
 
 @bot.message_handler(commands=["delete"])
 def delete_goods(message):
     global goods
-    print(f"Обробка команди /delete від {message.from_user.first_name}")
     names = parse_command_args(message.text)
     if not names:
         bot.send_message(message.chat.id, "❌ Потрібен хоча б один товар")
@@ -95,26 +104,23 @@ def delete_goods(message):
 
 @bot.message_handler(commands=["price"])
 def change_price(message):
-    print(f"Обробка команди /price від {message.from_user.first_name}")
     change_key("Ціна", message, set_price)
 
 
 @bot.message_handler(commands=["stock"])
 def change_stock(message):
-    print(f"Обробка команди /stock від {message.from_user.first_name}")
     change_key("Кількість", message, set_stock)
 
 
 @bot.message_handler(commands=["desc"])
 def change_desc(message):
-    print(f"Обробка команди /desc від {message.from_user.first_name}")
     change_key("Опис", message, delete_spaces)
 
 
 @bot.message_handler(commands=["report"])
 def view_report(message):
     global goods
-    print(f"Обробка команди /report від {message.from_user.first_name}")
+    bot.send_chat_action(message.chat.id, 'typing')
     total_stock = sum([g["Кількість"] for g in goods])
     total_value = sum([g["Ціна"] * g["Кількість"] for g in goods])
     sorted_goods = sorted([(g["Назва"], g["Ціна"]) for g in goods],
@@ -133,17 +139,41 @@ def view_report(message):
         f"{sorted_goods[0][0]}' за ціною {sorted_goods[0][1]} грн.")
 
 
+@bot.message_handler(commands=["oos"])
+def out_of_stock(message):
+    global goods
+    oos_list = [g for g in goods if not g["Кількість"]]
+    if oos_list:
+        bot.send_message(
+            message.chat.id,
+            f"{pretty_view(oos_list)}\n⚠️ Список відсутніх на складі товарів")
+    else:
+        bot.send_message(message.chat.id, "ℹ️ Всі товари є в наявності")
+
+
 @bot.message_handler(func=lambda message: message.text.lower() in HELLO_WORDS)
 def send_hello(message):
-    name = message.from_user.first_name
-    print(f"Відповідь на привітання від {name}")
-    bot.reply_to(message, f"{hello()}, {name}!")
+    bot.reply_to(message, f"{hello()}, {message.from_user.first_name}!")
 
 
 @bot.message_handler(content_types=['text'])
 def echo_all(message):
-    print(f"Луна на {message.text=} від {message.from_user.first_name}")
-    bot.send_message(message.chat.id, message.text)
+    if message.text == "🛒 Товари":
+        print_goods(message)
+    elif message.text == "📋 Звіт":
+        view_report(message)
+    elif message.text == "📉 Відсутні на складі":
+        out_of_stock(message)
+    elif message.text == "❓ Допомога":
+        send_help(message)
+    else:
+        bot.send_message(message.chat.id, message.text)
+
+
+def listener(messages):
+    for m in messages:
+        if m.content_type == 'text':
+            print(f"{m.from_user.first_name} [{m.chat.id=}]: {m.text}")
 
 
 def hello():
@@ -251,6 +281,13 @@ def change_key(key, message, func=None):
 
 
 if __name__ == "__main__":
+    bot.delete_my_commands()
+    bot.set_my_commands(commands=[
+        BotCommand("print", "Вивести список товарів"),
+        BotCommand("report", "Звіт по складу"),
+        BotCommand("oos", "Звіт по відсутнім товарам"),
+        BotCommand("help", "Допомога по командам")])
+    bot.set_update_listener(listener)
     goods = load()
     print("Бот слухає запити...")
     bot.infinity_polling()

@@ -99,36 +99,35 @@ def change_price(message):
     change_key("Ціна", message, set_price)
 
 
-@bot.message_handler(commands=["desc"])
-def change_desc(message):
-    print(f"Обробка команди /desc від {message.from_user.first_name}")
-    change_key("Опис", message)
-
-
 @bot.message_handler(commands=["stock"])
-def change_desc(message):
+def change_stock(message):
     print(f"Обробка команди /stock від {message.from_user.first_name}")
     change_key("Кількість", message, set_stock)
 
 
+@bot.message_handler(commands=["desc"])
+def change_desc(message):
+    print(f"Обробка команди /desc від {message.from_user.first_name}")
+    change_key("Опис", message, delete_spaces)
+
+
 @bot.message_handler(commands=["report"])
-def print_report(message):
+def view_report(message):
     global goods
     print(f"Обробка команди /report від {message.from_user.first_name}")
-    total_goods = len(goods)
     total_stock = sum([g["Кількість"] for g in goods])
     total_value = sum([g["Ціна"] * g["Кількість"] for g in goods])
     sorted_goods = sorted([(g["Назва"], g["Ціна"]) for g in goods],
                           key=lambda item: item[1])
     bot.send_message(
         message.chat.id,
-        f"Всього найменувань товарів: {total_goods}\n"
-        f"Загальна кількість товарів на складі: {total_stock} шт.\n"
-        f"Ціна складу: {total_value} грн.\n"
-        f"Найдорожчий товар: '{sorted_goods[-1][0]}' "
-        f"з ціною {sorted_goods[-1][1]} грн.\n"
-        f"Найдешевший товар: '{sorted_goods[0][0]}' "
-        f"з ціною {sorted_goods[0][1]} грн.\n")
+        f"📋 Всього найменувань товарів: {len(goods)}\n\n"
+        f"📦 Загальна кількість товарів на складі: {total_stock} шт.\n\n"
+        f"🛒 Загальна вартість складу: {total_value} грн.\n\n"
+        f"⬆️ Найдорожчий товар: '{sorted_goods[-1][0]}' "
+        f"з ціною {sorted_goods[-1][1]} грн.\n\n"
+        f"⬇️ Найдешевший товар: '{sorted_goods[0][0]}' "
+        f"з ціною {sorted_goods[0][1]} грн.")
 
 
 @bot.message_handler(func=lambda message: message.text.lower() in HELLO_WORDS)
@@ -226,25 +225,25 @@ def change_key(key, message, func=None):
     global goods
     args = parse_command_args(message.text)
     if len(args) != 2:
-        bot.send_message(message.chat.id, "Повинно бути два аргументи")
+        bot.send_message(message.chat.id, "❌ Повинно бути два аргументи")
         return
     index = find_goods(args[0])
     if index == -1:
         bot.send_message(
             message.chat.id,
-            f"'{args[0]}' не знайдено у списку товарів")
+            f"❗️'{args[0]}' не знайдено у списку товарів")
         return
     if func:
         value = func(args[1])
-        if value < 0:
+        if isinstance(value, int) and value < 0:
             bot.send_message(message.chat.id,
-                             f"Другий аргумент не може бути від'ємним")
+                             f"❌ Другий аргумент не може бути від'ємним")
             return
         goods[index][key] = value
     else:
         goods[index][key] = args[1]
     bot.send_message(message.chat.id,
-                     f"{key} товару '{args[0]}' змінено на '{args[1]}'")
+                     f"{pretty_view(goods[index])}\n✅ {key} товару змінено")
     save(goods)
 
 

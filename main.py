@@ -20,6 +20,10 @@ def send_help(message):
         "*Список команд, які використовує бот*:\n\n"
         "/add _назва, ціна, опис, кількість_ \- додати товар\n"
         "/delete _назва\\[, назва2, \\.\\.\\.\\]_ \- видалити товар\\[и\\]\n"
+        "/price _назва, ціна_ \- редагувати ціну товару\n"
+        "/desc _назва, опис_ \- редагувати опис товару\n"
+        "/stock _назва, кількість_ \- змінити кількість товару на складі\n"
+        "/report \- звіт по товарам на складі\n"
         "/print \- вивести список товарів",
         parse_mode="MarkdownV2")
 
@@ -31,7 +35,8 @@ def send_welcome(message):
         message.chat.id,
         f"{hello()}, {message.from_user.first_name}!\n"
         "Цей бот вміє працювати зі списком товарів. "
-        "Додавати та видаляти товари. "
+        "Додавати, видаляти, редагувати товари, "
+        "змінювати їх кількість на складі, а також проводити базову аналітику. "
         "Наберіть /help для отримання допомоги по командам")
 
 
@@ -49,10 +54,10 @@ def add_goods(message):
         bot.send_message(message.chat.id,
                          f"{pretty_view(goods[index])}\n❗вже є у списку")
         return
-    try:
-        new_article[1] = round(float(new_article[1]), 2)
-    except ValueError:
-        bot.send_message(message.chat.id, "❌ Хибна ціна товару")
+    new_article[1] = set_price(new_article[1])
+    new_article[3] = set_stock(new_article[3])
+    if new_article[1] < 0 or new_article[3] < 0:
+        bot.send_message(message.chat.id, "❌ Хибна ціна або кількість товару")
         return
     goods.append(dict(zip(GOODS_KEYS, new_article)))
     save(goods)
@@ -88,6 +93,46 @@ def delete_goods(message):
                 f"{pretty_view(goods.pop(index))}\n"
                 "❎ видалено зі списку товарів")
     save(goods)
+
+
+@bot.message_handler(commands=["price"])
+def change_price(message):
+    print(f"Обробка команди /price від {message.from_user.first_name}")
+    change_key("Ціна", message, set_price)
+
+
+@bot.message_handler(commands=["stock"])
+def change_stock(message):
+    print(f"Обробка команди /stock від {message.from_user.first_name}")
+    change_key("Кількість", message, set_stock)
+
+
+@bot.message_handler(commands=["desc"])
+def change_desc(message):
+    print(f"Обробка команди /desc від {message.from_user.first_name}")
+    change_key("Опис", message)
+
+
+@bot.message_handler(commands=["report"])
+def view_report(message):
+    global goods
+    print(f"Обробка команди /report від {message.from_user.first_name}")
+    total_stock = sum([g["Кількість"] for g in goods])
+    total_value = sum([g["Ціна"] * g["Кількість"] for g in goods])
+    sorted_goods = sorted([(g["Назва"], g["Ціна"]) for g in goods],
+                          key=lambda item: item[1])
+    bot.send_message(
+        message.chat.id,
+        "📋 Всього найменувань товарів:\n"
+        f"{len(goods)} од.\n\n"
+        "📦 Загальна кількість товарів на складі:\n"
+        f"{total_stock} шт.\n\n"
+        "🛒 Загальна вартість складу:\n"
+        f"{total_value} грн.\n\n"
+        "⬆️ Найдорожчий товар:\n"
+        f"'{sorted_goods[-1][0]}' за ціною {sorted_goods[-1][1]} грн.\n\n"
+        "⬇️ Найдешевший товар:\n'"
+        f"{sorted_goods[0][0]}' за ціною {sorted_goods[0][1]} грн.")
 
 
 @bot.message_handler(func=lambda message: message.text.lower() in HELLO_WORDS)
@@ -155,6 +200,46 @@ def find_goods(name):
         if goods[i][PRIMARY_KEY] == name:
             return i
     return -1
+
+
+def set_price(text_price):
+    try:
+        return round(float(text_price), 2)
+    except ValueError:
+        return -1
+
+
+def set_stock(text_stock):
+    try:
+        return int(text_stock)
+    except ValueError:
+        return -1
+
+
+def change_key(key, message, func=None):
+    global goods
+    args = parse_command_args(message.text)
+    if len(args) != 2:
+        bot.send_message(message.chat.id, "❌ Повинно бути два аргументи")
+        return
+    index = find_goods(args[0])
+    if index == -1:
+        bot.send_message(
+            message.chat.id,
+            f"❗️'{args[0]}' не знайдено у списку товарів")
+        return
+    if func:
+        value = func(args[1])
+        if isinstance(value, int) and value < 0:
+            bot.send_message(message.chat.id,
+                             f"❌ Другий аргумент неправильний")
+            return
+        goods[index][key] = value
+    else:
+        goods[index][key] = args[1]
+    bot.send_message(message.chat.id,
+                     f"{pretty_view(goods[index])}\n✅ {key} товару змінено")
+    save(goods)
 
 
 if __name__ == "__main__":

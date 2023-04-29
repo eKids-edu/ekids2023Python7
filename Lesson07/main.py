@@ -42,7 +42,7 @@ def send_welcome(message):
 
 @bot.message_handler(commands=["add"])
 def add_goods(message):
-    global goods, GOODS_KEYS
+    global goods
     print(f"Обробка команди /add від {message.from_user.first_name}")
     new_article = parse_command_args(message.text)
     if len(new_article) != len(GOODS_KEYS):
@@ -61,8 +61,10 @@ def add_goods(message):
         return
     goods.append(dict(zip(GOODS_KEYS, new_article)))
     save(goods)
-    bot.send_message(message.chat.id,
-                     f"{pretty_view(goods[-1])}\n✅ додано до списку товарів")
+    bot.send_message(
+        message.chat.id,
+        f"{pretty_view(goods[-1])}\n✅ додано до списку товарів"
+    )
 
 
 @bot.message_handler(commands=["print"])
@@ -108,7 +110,7 @@ def change_stock(message):
 @bot.message_handler(commands=["desc"])
 def change_desc(message):
     print(f"Обробка команди /desc від {message.from_user.first_name}")
-    change_key("Опис", message, delete_spaces)
+    change_key("Опис", message)
 
 
 @bot.message_handler(commands=["report"])
@@ -159,26 +161,16 @@ def hello():
 
 
 def load():
-    global GOODS_FILE_NAME
-    try:
-        with open(GOODS_FILE_NAME, "r", encoding="utf8") as g:
-            loaded_goods = json.load(g)
-    except FileNotFoundError:
-        print(f"{GOODS_FILE_NAME} не знайдено.")
-        loaded_goods = []
-    print("Завантажено список товарів:\n"
-          f"{pretty_view(loaded_goods)}")
+    with open(GOODS_FILE_NAME, "r", encoding="utf8") as saved_goods:
+        loaded_goods = json.load(saved_goods)
+    print(f"Завантажено список товарів:\n{pretty_view(loaded_goods)}")
     return loaded_goods
 
 
 def save(json_obj):
-    global GOODS_FILE_NAME
-    try:
-        with open(GOODS_FILE_NAME, "w", encoding="utf8") as f:
-            json.dump(json_obj, f, indent=2, ensure_ascii=False)
-        print("Список товарів збережено")
-    except IOError as err:
-        print(f"Помилка запису {GOODS_FILE_NAME} {err}")
+    with open(GOODS_FILE_NAME, "w", encoding="utf8") as f:
+        json.dump(json_obj, f, indent=2, ensure_ascii=False)
+    print("Збережено список товарів")
 
 
 def pretty_view(json_obj):
@@ -240,7 +232,7 @@ def change_key(key, message, func=None):
         value = func(args[1])
         if isinstance(value, int) and value < 0:
             bot.send_message(message.chat.id,
-                             f"❌ Другий аргумент не може бути від'ємним")
+                             f"❌ Другий аргумент неправильний")
             return
         goods[index][key] = value
     else:

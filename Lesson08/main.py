@@ -9,17 +9,15 @@ HELLO_WORDS = ["вітаю", "привіт", "hi", "hello", "bonjour"]
 GOODS_KEYS = ("Назва", "Ціна", "Опис", "Кількість")
 PRIMARY_KEY = "Назва"
 GOODS_FILE_NAME = "goods.json"
+MENU = {
+    "print": "Вивести список товарів",
+    "report": "Звіт по складу",
+    "oos": "Звіт по відсутнім товарам",
+    "help": "Допомога по командам",
+}
+BUTTONS = ("🛒 Товари", "📋 Звіт", "❓ Допомога", "📉 Відсутні на складі")
 
 bot = TeleBot(BOT_TOKEN)
-
-
-def keyboard():
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(KeyboardButton("🛒 Товари"),
-               KeyboardButton("📋 Звіт"),
-               KeyboardButton("❓ Допомога"),
-               KeyboardButton("📉 Відсутні на складі"))
-    return markup
 
 
 @bot.message_handler(commands=["start"])
@@ -114,7 +112,7 @@ def change_stock(message):
 
 @bot.message_handler(commands=["desc"])
 def change_desc(message):
-    change_key("Опис", message, delete_spaces)
+    change_key("Опис", message)
 
 
 @bot.message_handler(commands=["report"])
@@ -157,15 +155,16 @@ def send_hello(message):
 
 
 @bot.message_handler(content_types=['text'])
-def echo_all(message):
-    if message.text == "🛒 Товари":
+def check_buttons(message):
+    global BUTTONS
+    if message.text == BUTTONS[0]:
         print_goods(message)
-    elif message.text == "📋 Звіт":
+    elif message.text == BUTTONS[1]:
         view_report(message)
-    elif message.text == "📉 Відсутні на складі":
-        out_of_stock(message)
-    elif message.text == "❓ Допомога":
+    elif message.text == BUTTONS[2]:
         send_help(message)
+    elif message.text == BUTTONS[3]:
+        out_of_stock(message)
     else:
         bot.send_message(message.chat.id, message.text)
 
@@ -174,6 +173,13 @@ def listener(messages):
     for m in messages:
         if m.content_type == 'text':
             print(f"{m.from_user.first_name} [{m.chat.id=}]: {m.text}")
+
+
+def keyboard():
+    global BUTTONS
+    markup = ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add(*(KeyboardButton(b) for b in BUTTONS))
+    return markup
 
 
 def hello():
@@ -270,7 +276,7 @@ def change_key(key, message, func=None):
         value = func(args[1])
         if isinstance(value, int) and value < 0:
             bot.send_message(message.chat.id,
-                             f"❌ Другий аргумент не може бути від'ємним")
+                             f"❌ Другий аргумент неправильний")
             return
         goods[index][key] = value
     else:
@@ -282,11 +288,7 @@ def change_key(key, message, func=None):
 
 if __name__ == "__main__":
     bot.delete_my_commands()
-    bot.set_my_commands(commands=[
-        BotCommand("print", "Вивести список товарів"),
-        BotCommand("report", "Звіт по складу"),
-        BotCommand("oos", "Звіт по відсутнім товарам"),
-        BotCommand("help", "Допомога по командам")])
+    bot.set_my_commands([BotCommand(k, v) for k, v in MENU.items()])
     bot.set_update_listener(listener)
     goods = load()
     print("Бот слухає запити...")
